@@ -57,6 +57,18 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable String id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found: " + id));
+        return ResponseEntity.ok(UserResponseDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .build());
+    }
+
  /*   @PostMapping
     public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO requestDTO) {
         var user = new User();
