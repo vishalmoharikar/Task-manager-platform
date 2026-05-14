@@ -1,4 +1,4 @@
-package com.taskplatform.user.security;
+package com.taskplatform.task.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,21 +18,21 @@ import java.util.Collections;
 public class JwtTokenFilter extends OncePerRequestFilter {
     private final JwtTokenProvider tokenProvider;
 
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        var header = request.getHeader("Authorization");
+        String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
-            var token = header.substring(7);
+            String token = header.substring(7);
             try {
                 var claims = tokenProvider.validateToken(token);
-                String userId = claims.getSubject();
-                var auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+                var auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception ignored) {
 
             }
-        }
-        filterChain.doFilter(request, response);
 
+        }
+        filterChain.doFilter(request,response);
     }
 }

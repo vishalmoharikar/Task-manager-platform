@@ -5,8 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
-@SpringBootApplication
-@EnableDiscoveryClient
+@SpringBootApplication(exclude = {
+		org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class,
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
+})@EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.taskplatform.task.client")
 public class TaskServiceApplication {
 

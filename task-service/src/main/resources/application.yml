@@ -21,3 +21,6 @@ eureka:
 logging:
   level:
     com.taskplatform.task: DEBUG
+
+jwt:
+  secret: my-super-secret-jwt-key-for-learning-only
