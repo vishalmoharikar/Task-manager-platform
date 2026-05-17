@@ -1,16 +1,2 @@
 server:
   port: 8081
-
-spring:
-  application:
-    name: user-service
-  data:
-    mongodb:
-      uri: mongodb://admin:password123@localhost:27017/user_db?authSource=admin
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-jwt:
-  secret: my-super-secret-jwt-key-for-learning-only
