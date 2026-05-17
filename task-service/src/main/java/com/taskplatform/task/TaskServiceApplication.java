@@ -8,7 +8,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication(exclude = {
 		org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class,
 		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
-})@EnableDiscoveryClient
+})
+@EnableDiscoveryClient
 @EnableFeignClients(basePackages = "com.taskplatform.task.client")
 public class TaskServiceApplication {
 
