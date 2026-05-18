@@ -5,6 +5,7 @@ import com.taskplatform.user.dto.UserResponseDTO;
 import com.taskplatform.user.entity.User;
 import com.taskplatform.user.repository.UserRepository;
 import com.taskplatform.user.security.JwtTokenProvider;
+import com.taskplatform.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,10 +24,11 @@ public class UserController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserService userService;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserRequestDTO requestDTO){
-        if (userRepository.findByUsername(requestDTO.getUsername()).isPresent()) {
+        if (userService.findByUserName(requestDTO.getUsername()).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
 
@@ -34,7 +36,7 @@ public class UserController {
         user.setUsername(requestDTO.getUsername());
         user.setEmail(requestDTO.getEmail());
         user.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
-        var saved = userRepository.save(user);
+        var saved = userService.save(user) ;
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(UserResponseDTO.builder()
                         .id(saved.getId())
@@ -47,7 +49,7 @@ public class UserController {
         String username = request.get("username");
         String password = request.get("password");
 
-        User user = userRepository.findByUsername(username).orElseThrow(()->new RuntimeException("Invalid credentials"));
+        User user = userService.findByUserName( username).orElseThrow(()->new RuntimeException("Invalid credentials"));
 
         String token = jwtTokenProvider.generateToken(user.getId(), user.getUsername());
 
@@ -60,7 +62,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> getUserById(@PathVariable String id) {
-        User user = userRepository.findById(id)
+        User user = userService.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found: " + id));
         return ResponseEntity.ok(UserResponseDTO.builder()
                 .id(user.getId())

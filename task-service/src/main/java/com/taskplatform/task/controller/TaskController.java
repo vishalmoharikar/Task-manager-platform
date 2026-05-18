@@ -4,6 +4,7 @@ import com.taskplatform.task.client.UserServiceClient;
 import com.taskplatform.task.dto.TaskRequestDTO;
 import com.taskplatform.task.entity.Task;
 import com.taskplatform.task.repository.TaskRepository;
+import feign.FeignException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,9 +23,15 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<Task> createTask(@Valid @RequestBody TaskRequestDTO dto, @RequestHeader("X-User-Id") String creatorId) {
-//        if (dto.getAssigneeId() != null) {
-//            userServiceClient.getUserById(dto.getAssigneeId());
-//        }
+        try {
+            if (dto.getAssigneeId() != null) {
+                userServiceClient.getUserById(dto.getAssigneeId());
+            }
+        } catch (FeignException.NotFound e) {
+            throw new RuntimeException("User not found: " + dto.getAssigneeId());
+        } catch (feign.FeignException e){
+            throw new RuntimeException("User Service unavailable");
+        }
         Task task = new Task();
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
@@ -36,13 +43,15 @@ public class TaskController {
     }
 
     @GetMapping
-    public List<Task> getAllTasks(){
+    public List<Task> getAllTasks() {
         return taskRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public Task getTask(@PathVariable String id){
+    public Task getTask(@PathVariable String id) {
         return taskRepository.findById(id).orElseThrow();
     }
+
+
 
 }
