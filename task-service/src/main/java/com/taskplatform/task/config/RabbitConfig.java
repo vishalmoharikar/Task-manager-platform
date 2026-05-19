@@ -45,15 +45,15 @@ public class RabbitConfig {
     }
 
     @Bean
-    public MessageConverter jsonMessageConverter() {
+    public MessageConverter jsonMessageConvertor(){
         return new Jackson2JsonMessageConverter();
     }
 
-    @Bean
+    @Bean(name = "rabbitTemplate")
     @Primary
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMessageConverter(jsonMessageConverter());
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter jsonMessageConvertor){
+        RabbitTemplate template =  new RabbitTemplate(connectionFactory);
+        template.setMessageConverter(jsonMessageConvertor);
         return template;
     }
 }

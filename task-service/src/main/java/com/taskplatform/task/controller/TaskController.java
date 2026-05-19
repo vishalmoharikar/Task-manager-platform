@@ -8,9 +8,10 @@ import com.taskplatform.task.entity.Task;
 import com.taskplatform.task.event.TaskCreatedEvent;
 import com.taskplatform.task.repository.TaskRepository;
 import feign.FeignException;
-import jakarta.validation.Valid;
+ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +20,17 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/tasks")
-@RequiredArgsConstructor
 public class TaskController {
 
     private final TaskRepository taskRepository;
     private final UserServiceClient userServiceClient;
     private final RabbitTemplate rabbitTemplate;
+
+    public TaskController(TaskRepository taskRepository, UserServiceClient userServiceClient, @Qualifier("rabbitTemplate") RabbitTemplate rabbitTemplate) {
+        this.taskRepository = taskRepository;
+        this.userServiceClient = userServiceClient;
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
     @PostMapping
     public ResponseEntity<Task> createTask(@Valid @RequestBody TaskRequestDTO dto, @RequestHeader("X-User-Id") String creatorId) {
@@ -55,7 +61,7 @@ public class TaskController {
 
     private void publishTask(Task savedTask) {
         //now publishing Task
-        try {
+
             System.out.println("PUBLISHING EVENT TO RABBITMQ: " + savedTask.getId());
             TaskCreatedEvent event = new TaskCreatedEvent(savedTask.getId(),
                     savedTask.getTitle(),
@@ -65,26 +71,11 @@ public class TaskController {
                     savedTask.getAssigneeId(),
                     savedTask.getCreatorId()
             );
-            System.out.println("Event object: " + event);
-            System.out.println("Event taskId: " + event.getTaskId());
-            System.out.println("Event title: " + event.getTitle());
-
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                String json = mapper.writeValueAsString(event);
-                System.out.println("JSON STRING: " + json);
-            } catch (Exception e) {
-                System.out.println("JSON SERIALIZATION FAILED: " + e.getMessage());
-            }
+            System.out.println("Sending to exchange: " + RabbitConfig.EXCHANGE_NAME
+                    + " | routing key: " + RabbitConfig.ROUTING_KEY);
 
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE_NAME, RabbitConfig.ROUTING_KEY, event);
             System.out.println("EVENT PUBLISHED SUCCESSFULLY");
-        } catch (Exception e) {
-            System.out.println("FAILED TO PUBLISH: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-
     }
 
     @GetMapping
