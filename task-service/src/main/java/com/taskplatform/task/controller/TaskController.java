@@ -6,10 +6,13 @@ import com.taskplatform.task.config.RabbitConfig;
 import com.taskplatform.task.dto.TaskRequestDTO;
 import com.taskplatform.task.entity.Task;
 import com.taskplatform.task.event.TaskCreatedEvent;
+import com.taskplatform.task.exception.TaskNotFoundException;
+import com.taskplatform.task.exception.UserServiceException;
 import com.taskplatform.task.repository.TaskRepository;
 import feign.FeignException;
  import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+ import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -20,6 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/tasks")
+@Slf4j
 public class TaskController {
 
     private final TaskRepository taskRepository;
@@ -39,9 +43,9 @@ public class TaskController {
                 userServiceClient.getUserById(dto.getAssigneeId());
             }
         } catch (FeignException.NotFound e) {
-            throw new RuntimeException("User not found: " + dto.getAssigneeId());
+            throw new UserServiceException("User not found: " + dto.getAssigneeId());
         } catch (feign.FeignException e) {
-            throw new RuntimeException("User Service unavailable");
+            throw new UserServiceException("User Service unavailable");
         }
         Task task = new Task();
         task.setTitle(dto.getTitle());
@@ -60,10 +64,9 @@ public class TaskController {
     }
 
     private void publishTask(Task savedTask) {
-        //now publishing Task
-
-            System.out.println("PUBLISHING EVENT TO RABBITMQ: " + savedTask.getId());
-            TaskCreatedEvent event = new TaskCreatedEvent(savedTask.getId(),
+         try {
+            TaskCreatedEvent event = new TaskCreatedEvent(
+                    savedTask.getId(),
                     savedTask.getTitle(),
                     savedTask.getDescription(),
                     savedTask.getStatus(),
@@ -71,11 +74,16 @@ public class TaskController {
                     savedTask.getAssigneeId(),
                     savedTask.getCreatorId()
             );
-            System.out.println("Sending to exchange: " + RabbitConfig.EXCHANGE_NAME
-                    + " | routing key: " + RabbitConfig.ROUTING_KEY);
-
-            rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE_NAME, RabbitConfig.ROUTING_KEY, event);
-            System.out.println("EVENT PUBLISHED SUCCESSFULLY");
+            rabbitTemplate.convertAndSend(
+                    RabbitConfig.EXCHANGE_NAME,
+                    RabbitConfig.ROUTING_KEY,
+                    event
+            );
+            log.info("Task event published: {}", savedTask.getId());
+        } catch (Exception e) {
+            log.error("Failed to publish event for taskId: {}. Error: {}",
+                    savedTask.getId(), e.getMessage());
+        }
     }
 
     @GetMapping
@@ -85,7 +93,7 @@ public class TaskController {
 
     @GetMapping("/{id}")
     public Task getTask(@PathVariable String id) {
-        return taskRepository.findById(id).orElseThrow();
+        return taskRepository.findById(id).orElseThrow(()->new TaskNotFoundException(id));
     }
 
 

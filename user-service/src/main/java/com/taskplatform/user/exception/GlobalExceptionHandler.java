@@ -1,5 +1,6 @@
 package com.taskplatform.user.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,6 +11,8 @@ import java.time.Instant;
 import java.util.HashMap;
 
 @RestControllerAdvice
+@Slf4j
+
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -25,10 +28,25 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+
+
+    // ADD THIS — 404 for user not found
+    @ExceptionHandler(UserNotFoundException.class)
+    public ProblemDetail handleUserNotFound(UserNotFoundException ex) {
+        var problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("User Not Found");
+        problem.setDetail(ex.getMessage());
+        problem.setProperty("timestamp", Instant.now());
+        return problem;
+    }
+
+    // REPLACE your existing handleGeneric with this
     @ExceptionHandler(Exception.class)
-    public ProblemDetail handleGeneric(Exception ex){
+    public ProblemDetail handleGeneric(Exception ex) {
+        log.error("Unhandled exception: {}", ex.getMessage(), ex);
         var problem = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
-        problem.setTitle("Internal Error");
+        problem.setTitle("Internal Server Error");
+        problem.setDetail("An unexpected error occurred");
         problem.setProperty("timestamp", Instant.now());
         return problem;
     }
