@@ -8,6 +8,10 @@ spring:
     username: admin
     password: password123
 
+rabbitmq:
+  queue:
+    notification: notification.queue
+
 eureka:
   client:
     service-url:
