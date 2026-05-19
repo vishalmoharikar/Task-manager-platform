@@ -1,5 +1,6 @@
 package com.taskplatform.task.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskplatform.task.client.UserServiceClient;
 import com.taskplatform.task.config.RabbitConfig;
 import com.taskplatform.task.dto.TaskRequestDTO;
@@ -64,6 +65,18 @@ public class TaskController {
                     savedTask.getAssigneeId(),
                     savedTask.getCreatorId()
             );
+            System.out.println("Event object: " + event);
+            System.out.println("Event taskId: " + event.getTaskId());
+            System.out.println("Event title: " + event.getTitle());
+
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                String json = mapper.writeValueAsString(event);
+                System.out.println("JSON STRING: " + json);
+            } catch (Exception e) {
+                System.out.println("JSON SERIALIZATION FAILED: " + e.getMessage());
+            }
+
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE_NAME, RabbitConfig.ROUTING_KEY, event);
             System.out.println("EVENT PUBLISHED SUCCESSFULLY");
         } catch (Exception e) {

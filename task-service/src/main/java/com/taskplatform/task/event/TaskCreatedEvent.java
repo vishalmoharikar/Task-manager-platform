@@ -1,13 +1,20 @@
 package com.taskplatform.task.event;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.io.Serializable;
 
-public record TaskCreatedEvent(
-        String taskId,
-        String title,
-        String description,
-        String status,
-        String priority,
-        String assigneeId,
-        String creatorId
-) implements Serializable {}
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class TaskCreatedEvent {
+    private String taskId;
+    private String title;
+    private String description;
+    private String status;
+    private String priority;
+    private String assigneeId;
+    private String creatorId;
+}
