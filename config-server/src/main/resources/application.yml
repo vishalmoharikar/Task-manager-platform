@@ -11,7 +11,9 @@ spring:
       server:
         native:
           # Use file: prefix WITHOUT // for absolute paths on Mac
-          search-locations: file:/Volumes/Crucial X9/Vishal/java/Task-manager-platform/config-server/src/main/resources/shared-configs
+          # search-locations: file:/Volumes/Crucial X9/Vishal/java/Task-manager-platform/config-server/src/main/resources/shared-configs
+          search-locations: classpath:/shared-configs/   # ← fixed, no hardcoded path
+
 
 eureka:
   client:
